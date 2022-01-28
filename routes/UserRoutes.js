@@ -15,6 +15,8 @@ router.post(
   userController.signup
 )
 
+router.post('/refresh', userController.refresh)
+
 router.post('/login', userController.login)
 
 module.exports = router

@@ -1,15 +1,24 @@
+require("dotenv").config()
+
 const UserModel = require("../models/UserModel")
 const { validationResult } = require("express-validator")
 const HttpError = require("../models/util/HttpErrorModel")
-const bcrypt = require('bcrypt')
-const jwt = require('jsonwebtoken')
+const bcrypt = require("bcrypt")
+const jwt = require("jsonwebtoken")
+const { verifyRefresh } = require("../utils/helper")
 
-const SECRET_PHRASE = 'epilepsy_surfboard_legend_rubbed'
+const SECRET_PHRASE = process.env.JWT_SECRET_PHRASE
+const REFRESH_PHRASE = process.env.JWT_REFRESH_PHRASE
 
 const signup = async (req, res, next) => {
   const error = validationResult(req)
   if (!error.isEmpty()) {
-    return next(new HttpError("Validation Error! Please fill the required fields and try again", 422))
+    return next(
+      new HttpError(
+        "Validation Error! Please fill the required fields and try again",
+        422
+      )
+    )
   }
 
   const { first_name, last_name, email, password } = req.body
@@ -20,21 +29,23 @@ const signup = async (req, res, next) => {
   try {
     existingUser = await UserModel.findOne({ email: email })
   } catch (err) {
-    console.log(err);
-    const error = new HttpError("An error occured while finding existing user", 500)
+    console.log(err)
+    const error = new HttpError(
+      "An error occured while finding existing user",
+      500
+    )
     return next(error)
   }
 
-  if(existingUser) {
+  if (existingUser) {
     const error = new HttpError("User already exist", 422)
     return next(error)
   }
 
-  
   let hashedPassword
   try {
     hashedPassword = await bcrypt.hash(password, 12)
-  } catch(err) {
+  } catch (err) {
     const error = new HttpError("Internal server error", 500)
     return next(error)
   }
@@ -45,7 +56,7 @@ const signup = async (req, res, next) => {
     email,
     password: hashedPassword,
     isAdmin: false,
-    active: true
+    active: true,
   })
 
   try {
@@ -58,7 +69,6 @@ const signup = async (req, res, next) => {
   res.status(201).json({ message: "ok" })
 }
 
-
 const login = async (req, res, next) => {
   const { email, password } = req.body
 
@@ -67,12 +77,15 @@ const login = async (req, res, next) => {
   try {
     existingUser = await UserModel.findOne({ email: email })
   } catch (err) {
-    console.log(err);
-    const error = new HttpError("An error occured while finding existing user", 500)
+    console.log(err)
+    const error = new HttpError(
+      "An error occured while finding existing user",
+      500
+    )
     return next(error)
   }
 
-  if(!existingUser) {
+  if (!existingUser) {
     const error = new HttpError("User does not exist", 400)
     return next(error)
   }
@@ -85,23 +98,86 @@ const login = async (req, res, next) => {
     return next(error)
   }
 
-  if(!isValidPassword){
+  console.log(isValidPassword)
+
+  if (!isValidPassword) {
+    console.log("Here")
     const error = new HttpError("Wrong password", 400)
     return next(error)
   }
 
   let token
+  let refreshToken
   try {
-    token = await jwt.sign({userId: existingUser.id}, SECRET_PHRASE, {expiresIn: '1h'})
+    token = await jwt.sign({ userId: existingUser.id }, SECRET_PHRASE, {
+      expiresIn: "50000ms",
+    })
+    refreshToken = await jwt.sign({userId: existingUser.id}, REFRESH_PHRASE, { expiresIn: '2h'})
   } catch (err) {
     const error = new HttpError("Error creating token", 500)
     return next(error)
   }
-
-  res.json({token: token, userId: existingUser.id, isAdmin: existingUser.isAdmin})
+  
+  res.json({
+    token: token,
+    refresh: refreshToken,
+    userId: existingUser.id,
+    isAdmin: existingUser.isAdmin,
+  })
 }
 
+
+const refresh = async (req, res, next) => {
+  const { userId, refresh } = req.body
+  
+  // Find user by ID
+  let existingUser
+  try {
+    existingUser = await UserModel.findById(userId)
+  } catch (err) {
+    console.log(err)
+    const error = new HttpError(
+      "An error occured while finding existing user",
+      500
+      )
+    return next(error)
+  }
+  
+  if (!existingUser) {
+    const error = new HttpError("User does not exist", 400)
+    return next(error)
+  }
+
+  // Verify the refresh token
+  const isValid = verifyRefresh(userId, refresh)
+
+  if(!isValid) {
+    const error = new HttpError("Invalid Refresh Token", 401)
+    return next(error)
+  }
+
+  let token
+  let refreshToken
+  try {
+    token = await jwt.sign({ userId: existingUser.id }, SECRET_PHRASE, {
+      expiresIn: "50000ms",
+    })
+    refreshToken = await jwt.sign({userId: existingUser.id}, REFRESH_PHRASE, { expiresIn: '2h'})
+  } catch (err) {
+    const error = new HttpError("Error creating token", 500)
+    return next(error)
+  }
+  
+  res.json({
+    token: token,
+    refresh: refreshToken,
+    userId: existingUser.id,
+    isAdmin: existingUser.isAdmin,
+  })
+  
+}
 
 // @ Module Exports
 exports.signup = signup
 exports.login = login
+exports.refresh = refresh
