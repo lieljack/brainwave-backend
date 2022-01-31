@@ -36,7 +36,7 @@ const createClassLevel = async (req, res, next) => {
   } catch (err) {
     return next(new HttpError("An error occured while saving", 500))
   }
-  
+
   res.status(201).json({ message: "Created Successfully" })
 }
 
@@ -46,11 +46,11 @@ const getAllClassLevels = async (req, res, next) => {
 
   try {
     classLevels = await ClassLevelModel.find()
-  } catch(err) {
+  } catch (err) {
     return next(new HttpError("Server error!", 500))
   }
-  
-  if(!classLevels) {
+
+  if (!classLevels) {
     return next(new HttpError("No Class Level Found!", 404))
   }
 
@@ -59,8 +59,8 @@ const getAllClassLevels = async (req, res, next) => {
 
 // Get Single Object
 const getClassLevelById = async (req, res, next) => {
-  const {classId} = req.params
-  
+  const { classId } = req.params
+
   let classLevelObject
   try {
     classLevelObject = await ClassLevelModel.findById(classId)
@@ -68,13 +68,37 @@ const getClassLevelById = async (req, res, next) => {
     return next(new HttpError("Server error!", 500))
   }
 
-  if(!classLevelObject) {
+  if (!classLevelObject) {
     return next(new HttpError("No Class Level Found!", 404))
   }
-  
+
   res.json(classLevelObject)
+}
+
+const deleteClassLevelById = async (req, res, next) => {
+  const { classId } = req.params
+
+  let classLevelObject
+  try {
+    classLevelObject = await ClassLevelModel.findById(classId)
+  } catch (error) {
+    return next(new HttpError("Server error!", 500))
+  }
+
+  if (!classLevelObject) {
+    return next(new HttpError("No Class Level Found!", 404))
+  }
+
+  try {
+    await ClassLevelModel.findByIdAndDelete(classId)
+  } catch (error) {
+    return next(new HttpError("Server error!", 500))
+  }
+
+  res.status(200).json({ message: "Deleted Successfully" })
 }
 
 exports.createClassLevel = createClassLevel
 exports.getAllClassLevels = getAllClassLevels
 exports.getClassLevelById = getClassLevelById
+exports.deleteClassLevelById = deleteClassLevelById

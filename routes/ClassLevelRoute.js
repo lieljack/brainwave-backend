@@ -18,5 +18,6 @@ router.post(
   [check("classlevel").not().isEmpty()],
   classlevelController.createClassLevel
 )
+router.delete("/:classId", classlevelController.deleteClassLevelById)
 
 module.exports = router
