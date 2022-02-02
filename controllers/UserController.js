@@ -110,7 +110,7 @@ const login = async (req, res, next) => {
   let refreshToken
   try {
     token = await jwt.sign({ userId: existingUser.id }, SECRET_PHRASE, {
-      expiresIn: "50000ms",
+      expiresIn: "1h",
     })
     refreshToken = await jwt.sign({userId: existingUser.id}, REFRESH_PHRASE, { expiresIn: '2h'})
   } catch (err) {
@@ -160,7 +160,7 @@ const refresh = async (req, res, next) => {
   let refreshToken
   try {
     token = await jwt.sign({ userId: existingUser.id }, SECRET_PHRASE, {
-      expiresIn: "50000ms",
+      expiresIn: "1h",
     })
     refreshToken = await jwt.sign({userId: existingUser.id}, REFRESH_PHRASE, { expiresIn: '2h'})
   } catch (err) {
