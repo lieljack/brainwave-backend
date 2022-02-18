@@ -53,4 +53,4 @@ const getAllSubjects = async (req, res, next) => {
 }
 
 exports.createSubject = createSubject
-exports.getAllSubjects = getAllSubjects
+exports.getAllSubjects = getAllSubjects 

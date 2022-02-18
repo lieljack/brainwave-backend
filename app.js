@@ -9,8 +9,10 @@ const HttpError = require("./models/util/HttpErrorModel")
 const userRoutes = require("./routes/UserRoutes")
 const classLevelRoutes = require("./routes/ClassLevelRoute")
 const subjectRoute = require("./routes/SubjectRoute")
+const questionRoute = require('./routes/QuestionRoute')
 
 const dbConnectionString = "mongodb://127.0.0.1:27017/brainwave"
+// const dbConnectionString = "mongodb+srv://lieljack:lieljack@cluster0.9unqa.mongodb.net/brainwave?retryWrites=true&w=majority"
 
 const app = express()
 
@@ -22,6 +24,7 @@ app.use(cors())
 app.use("/api/auth", userRoutes)
 app.use("/api/classlevel", classLevelRoutes)
 app.use("/api/subjects", subjectRoute)
+app.use("/api/question", questionRoute)
 
 app.use((req, res, next) => {
   const notFoundError = new HttpError("This route could not be found", 404)
