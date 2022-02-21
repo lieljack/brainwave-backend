@@ -1,10 +1,8 @@
 const HttpError = require("../models/util/HttpErrorModel")
 const QuestionModel = require("../models/QuestionModel")
-const OptionsModel = require("../models/OptionsModel")
 const SubjectModel = require("../models/SubjectModel")
 const ClassLevelModel = require("../models/ClassLevelModel")
 const { validationResult } = require("express-validator")
-const Mongoose = require("mongoose")
 
 const createQuestion = async (req, res, next) => {
   const error = validationResult(req)
@@ -18,7 +16,7 @@ const createQuestion = async (req, res, next) => {
   }
 
   // destructure data from request body
-  const { question, subject, classlevel, options } = req.body
+  const { question, subject, classlevel, options, topic } = req.body
 
   // check if subject and classlevel exists
   let subjectExist
@@ -43,7 +41,7 @@ const createQuestion = async (req, res, next) => {
     
     // Check if correct answer is provided
     const check = options.findIndex(element => {return element.isCorrect === true})
-    console.log(check);
+
     if(check) {
       published = true
     } else {
@@ -66,6 +64,7 @@ const createQuestion = async (req, res, next) => {
   const newQuestion = new QuestionModel({
     subject,
     class_level: classlevel,
+    topic,
     question,
     options: optionArray,
     published,
@@ -92,5 +91,121 @@ const getQuestions = async (req, res, next) => {
   res.json(questions)
 }
 
+
+const editQuestion = async (req, res, next) => {
+  const error = validationResult(req)
+  if (!error.isEmpty()) {
+    return next(
+      new HttpError(
+        "Validation Error! Please fill the required fields and try again",
+        422
+      )
+    )
+  }
+
+  // destructure data from request body
+  const { question, subject, classlevel, options } = req.body
+
+  const { id } = req.params
+
+  let questionObject
+  try {
+    questionObject = await QuestionModel.findById(id)
+  } catch (err) {
+    const error = new HttpError("Internal Server Error", 500)
+    return next(error)
+  }
+
+  if(!questionObject) {
+    const error = new HttpError("Question does not exist", 404)
+    return next(error)
+  }
+
+  // @ - check if classlevel changed
+  // @ - if changed, get new class level object and replace
+  if(questionObject.class_level !== classlevel) {
+    let newClassLevel
+    try {
+      newClassLevel = await ClassLevelModel.findById(classlevel)
+    } catch(err) {
+      const error = new HttpError("Internal Server Error", 500)
+      return next(error)
+    }
+
+    if(!newClassLevel) {
+      const error = new HttpError("Class level does not exist", 404)
+      return next(error)
+    }
+
+    await QuestionModel.findByIdAndUpdate(id, {class_level: newClassLevel})
+  }
+
+  // @ - check if subject change and update
+  if(questionObject.subject != subject) {
+    let newSubject
+    try {
+      newSubject = await SubjectModel.findById(subject)
+    } catch(err) {
+      const error = new HttpError("Internal Server Error", 500)
+      return next(error)
+    }
+
+    if(!newSubject) {
+      const error = new HttpError("Subject does not exist", 404)
+      return next(error)
+    }
+
+    await QuestionModel.findByIdAndUpdate(id, {subject: newSubject})
+  }
+
+  // @ - check if question is changed
+  try {
+    await QuestionModel.findByIdAndUpdate(id, {
+      question,
+      topic
+    })
+  } catch (err) {
+    const error = new HttpError("Internal Server Error!", 500)
+    return next(error)
+  }
+
+
+  let optionArray = []
+  options.forEach((element) => {
+    optionArray.push({
+      text: element.option,   
+      correct: element.isCorrect
+    })
+  })
+
+  try {
+    await QuestionModel.findByIdAndUpdate(id, {options: optionArray})
+  } catch (err) {
+    const error = new HttpError("Internal Server Error!", 500)
+    return next(error)
+  }
+
+  questionObject = await QuestionModel.findById(id)
+
+  res.json(questionObject)
+}
+
+const deleteQuestion = async (req, res, next) => {
+  const { id } = req.params
+  let deletedQuestion 
+  try {
+    deletedQuestion = await QuestionModel.findByIdAndDelete(id)
+  } catch (err) {
+    const error = new HttpError("Internal Server Error", 500)
+    return next(error)
+  }
+
+  console.log(deleteQuestion.toString())
+
+  res.json({message: "Success"})
+}
+
 exports.createQuestion = createQuestion
 exports.getQuestions = getQuestions
+exports.editQuestion = editQuestion
+exports.deleteQuestion = deleteQuestion
