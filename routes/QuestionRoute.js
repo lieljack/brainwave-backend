@@ -27,5 +27,9 @@ router.patch("/:id", questionController.editQuestion)
 
 router.delete("/:id", questionController.deleteQuestion)
 
+router.get("/topic_suggestions/:subjectId", questionController.getTopicSuggestions)
+
+router.get("/stats", questionController.getStats)
+
 
 module.exports = router

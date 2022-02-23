@@ -14,7 +14,7 @@ const QuestionSchema = new Schema({
     ref: "Class Level",
     required: true,
   },
-  topic: { type: String, required: true},
+  topic: { type: mongoose.Types.ObjectId, ref: "Topic", required: true },
   question: { type: String, required: true },
   options: [OptionSchema],
   published: { type: Boolean },

@@ -11,8 +11,8 @@ const classLevelRoutes = require("./routes/ClassLevelRoute")
 const subjectRoute = require("./routes/SubjectRoute")
 const questionRoute = require('./routes/QuestionRoute')
 
-const dbConnectionString = "mongodb://127.0.0.1:27017/brainwave"
-// const dbConnectionString = "mongodb+srv://lieljack:lieljack@cluster0.9unqa.mongodb.net/brainwave?retryWrites=true&w=majority"
+// const dbConnectionString = "mongodb://127.0.0.1:27017/brainwave"
+const dbConnectionString = "mongodb+srv://lieljack:lieljack@cluster0.9unqa.mongodb.net/brainwave?retryWrites=true&w=majority"
 
 const app = express()
 
