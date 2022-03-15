@@ -9,6 +9,7 @@ const router = express.Router()
 router.use(checkAuth)
 
 router.get("/", subjectController.getAllSubjects)
+router.get("/:classlevel", subjectController.getSubjectsForClassLevel)
 
 router.use(checkAdmin)
 

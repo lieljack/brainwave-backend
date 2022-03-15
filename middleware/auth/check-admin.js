@@ -22,6 +22,7 @@ module.exports = async (req, res, next) => {
   }
   
   if(existingUser.isAdmin === true) {
+    console.log(existingUser)
     return next()
   } else {
     const error = new HttpError("Error! User Not Permitted", 403)
