@@ -305,12 +305,46 @@ const getStats = async (req, res, next) => {
     questionCount = await QuestionModel.count({})
     classlevelCount = await ClassLevelModel.count({})
     subjectCount = await SubjectModel.count({})
-  } catch(err) {
+  } catch (err) {
     const error = new HttpError("Internal Server Error", 500)
     return next(error)
   }
 
-  res.json({ questions: questionCount, classlevel: classlevelCount, subject: subjectCount })
+  res.json({
+    questions: questionCount,
+    classlevel: classlevelCount,
+    subject: subjectCount,
+  })
+}
+
+const getNumberofQuestionsByTopicId = async (req, res, next) => {
+  const error = validationResult(req)
+  if (!error.isEmpty()) {
+    return next(
+      new HttpError(
+        error,
+        422
+      )
+    )
+  }
+
+  // destructure data from request body
+  const { topic_ids, subject_ids, difficulty_level } = req.body
+
+  let questionCount
+
+  try {
+    questionCount = await QuestionModel.find({
+      subject: { $in: subject_ids },
+      class_level: difficulty_level,
+      topic: { $in: topic_ids },
+    }).count()
+  } catch (err) {
+    const error = new HttpError("Internal Server Error", 500)
+    return next(error)
+  }
+
+  res.json({ count: questionCount })
 }
 
 exports.createQuestion = createQuestion
@@ -319,3 +353,4 @@ exports.editQuestion = editQuestion
 exports.deleteQuestion = deleteQuestion
 exports.getTopicSuggestions = getTopicSuggestions
 exports.getStats = getStats
+exports.getNumberofQuestionsByTopicId = getNumberofQuestionsByTopicId

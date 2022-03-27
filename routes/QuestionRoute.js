@@ -7,6 +7,18 @@ const { check } = require("express-validator")
 const router = express.Router()
 
 router.use(checkAuth)
+router.post(
+  "/get_number_of_questions",
+  [
+    check("topic_ids").isArray().not().isEmpty(),
+    check("subject_ids").isArray().not().isEmpty(),
+    check("difficulty_level").isString().not().isEmpty(),
+  ],
+  questionController.getNumberofQuestionsByTopicId
+)
+
+
+
 router.use(checkAdmin)
 
 router.get("/", questionController.getQuestions)
